@@ -60,12 +60,6 @@ export const unstable_settings = {
   matcher: {
     // Skip screens and other requests with safe methods
     methods: ['POST', 'PUT', 'PATCH', 'DELETE'],
-    patterns: [
-      '/api',
-      '/api/[...path]',
-      // Expo also serves auth API routes under /(auth)/api
-      '/(auth)/api/[...path]',
-    ],
   },
 };
 
@@ -85,6 +79,6 @@ export default function middleware(request: Request) {
 }
 ```
 
-Adjust `patterns` for your API Route paths. Behind a reverse proxy, ensure it overwrites `x-forwarded-host` with the public host. The check compares hosts and ports, not protocols.
+If you allow cross-origin writes, allow those origins in this check too.
 
 - Reproduction: https://github.com/karlhorky/repro-expo-router-api-routes-no-csrf-protection
