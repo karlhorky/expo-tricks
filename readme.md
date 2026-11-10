@@ -10,8 +10,8 @@ To load native addons and include their binaries in server exports, apply pnpm p
 
 ```bash
 mkdir -p patches
-curl --fail --location https://raw.githubusercontent.com/karlhorky/expo-tricks/main/patches/@expo__cli@58.1.18.patch --output patches/@expo__cli@58.1.18.patch
-curl --fail --location https://raw.githubusercontent.com/karlhorky/expo-tricks/main/patches/@expo__metro-config@58.0.20.patch --output patches/@expo__metro-config@58.0.20.patch
+curl --fail --location https://raw.githubusercontent.com/karlhorky/expo-tricks/main/load-node-js-native-addons-in-api-routes-and-server-exports/patches/@expo__cli@58.1.18.patch --output patches/@expo__cli@58.1.18.patch
+curl --fail --location https://raw.githubusercontent.com/karlhorky/expo-tricks/main/load-node-js-native-addons-in-api-routes-and-server-exports/patches/@expo__metro-config@58.0.20.patch --output patches/@expo__metro-config@58.0.20.patch
 ```
 
 Register the patches:
