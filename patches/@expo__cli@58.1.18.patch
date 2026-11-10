@@ -1,0 +1,227 @@
+diff --git a/build/src/start/server/metro/MetroBundlerDevServer.js b/build/src/start/server/metro/MetroBundlerDevServer.js
+--- a/build/src/start/server/metro/MetroBundlerDevServer.js
++++ b/build/src/start/server/metro/MetroBundlerDevServer.js
+@@ -90,6 +90,13 @@
+     };
+     return data;
+ }
++function _nodefs() {
++    const data = /*#__PURE__*/ _interop_require_default(require("node:fs"));
++    _nodefs = function() {
++        return data;
++    };
++    return data;
++}
+ function _path() {
+     const data = /*#__PURE__*/ _interop_require_default(require("path"));
+     _path = function() {
+@@ -127,6 +134,7 @@
+ const _metroDebugEvents = require("./metroDebugEvents");
+ const _metroErrorInterface = require("./metroErrorInterface");
+ const _metroWatchTypeScriptFiles = require("./metroWatchTypeScriptFiles");
++const _nativeNodeAddons = require("./nativeNodeAddons");
+ const _resolveLoader = require("./resolveLoader");
+ const _router = require("./router");
+ const _serializeHtml = require("./serializeHtml");
+@@ -151,6 +159,21 @@
+     async exportServerRouteAsync({ contents, artifactFilename, files, includeSourceMaps, descriptor }) {
+         if (!contents) return;
+         let src = contents.src;
++        if (contents.nativeAddons?.length) {
++            const filenames = {};
++            for (const filePath of contents.nativeAddons){
++                const id = (0, _nativeNodeAddons.getNativeAddonId)(filePath);
++                const filename = `_expo/native/${id}/${_path().default.basename(filePath)}`;
++                filenames[id] = (0, _filePath.toPosixPath)(_path().default.relative(_path().default.dirname(artifactFilename), filename));
++                if (!files.has(filename)) {
++                    files.set(filename, {
++                        contents: await _nodefs().default.promises.readFile(filePath),
++                        targetDomain: 'server'
++                    });
++                }
++            }
++            src = (0, _nativeNodeAddons.createNativeAddonLoader)(filenames) + src;
++        }
+         if (includeSourceMaps && contents.map) {
+             // TODO(kitten): Merge the source map transformer in the future
+             // https://github.com/expo/expo/blob/0dffdb15/packages/%40expo/metro-config/src/serializer/serializeChunks.ts#L422-L439
+@@ -172,7 +195,7 @@
+                     }),
+                     sourcesContent: new Array(parsedMap.sources.length).fill(null),
+                     names: parsedMap.names,
+-                    mappings: parsedMap.mappings
++                    mappings: (contents.nativeAddons?.length ? ';' : '') + parsedMap.mappings
+                 }),
+                 targetDomain: 'server'
+             };
+@@ -617,7 +640,10 @@
+             const url = new URL(relativePath, this.getDevServerUrlOrAssert());
+             this.setupHmr(url);
+         }
+-        return (0, _getStaticRenderFunctions.evalMetroAndWrapFunctions)(this.projectRoot, res.src, res.filename, res.map, specificOptions.isExporting ?? this.instanceMetroOptions.isExporting);
++        return (0, _getStaticRenderFunctions.evalMetroAndWrapFunctions)(this.projectRoot, res.src + (res.nativeAddons?.length ? '\n' + (0, _nativeNodeAddons.createNativeAddonLoader)(Object.fromEntries(res.nativeAddons.map((filePath)=>[
++                (0, _nativeNodeAddons.getNativeAddonId)(filePath),
++                filePath
++            ]))) : ''), res.filename, res.map, specificOptions.isExporting ?? this.instanceMetroOptions.isExporting);
+     };
+     async metroImportAsArtifactsAsync(filePath, specificOptions = {}) {
+         const results = await this.ssrLoadModuleContents(filePath, {
+@@ -1740,7 +1766,11 @@
+                 bundleCode = bundle.code;
+                 bundleMap = bundle.map;
+             }
++            const nativeAddons = [
++                ...revision.graph.dependencies.keys()
++            ].filter((filePath)=>filePath.startsWith(_nativeNodeAddons.NATIVE_ADDON_EXPORT_PREFIX)).map((filePath)=>filePath.slice(_nativeNodeAddons.NATIVE_ADDON_EXPORT_PREFIX.length));
+             const result = {
++                nativeAddons,
+                 numModifiedFiles: delta.reset ? delta.added.size + revision.prepend.length : delta.added.size + delta.modified.size + delta.deleted.size,
+                 lastModifiedDate: revision.date,
+                 nextRevId: revision.id,
+@@ -1822,5 +1852,3 @@
+     }
+     return css;
+ }
+-
+-//# sourceMappingURL=MetroBundlerDevServer.js.map
+diff --git a/build/src/start/server/metro/nativeNodeAddons.js b/build/src/start/server/metro/nativeNodeAddons.js
+new file mode 100644
+--- /dev/null
++++ b/build/src/start/server/metro/nativeNodeAddons.js
+@@ -0,0 +1,40 @@
++"use strict";
++Object.defineProperty(exports, "__esModule", {
++    value: true
++});
++0 && (module.exports = {
++    NATIVE_ADDON_EXPORT_PREFIX: null,
++    createNativeAddonLoader: null,
++    getNativeAddonId: null
++});
++function _export(target, all) {
++    for(var name in all)Object.defineProperty(target, name, {
++        enumerable: true,
++        get: Object.getOwnPropertyDescriptor(all, name).get
++    });
++}
++_export(exports, {
++    get NATIVE_ADDON_EXPORT_PREFIX () {
++        return NATIVE_ADDON_EXPORT_PREFIX;
++    },
++    get createNativeAddonLoader () {
++        return createNativeAddonLoader;
++    },
++    get getNativeAddonId () {
++        return getNativeAddonId;
++    }
++});
++function _nodecrypto() {
++    const data = require("node:crypto");
++    _nodecrypto = function() {
++        return data;
++    };
++    return data;
++}
++const NATIVE_ADDON_EXPORT_PREFIX = '\0node-addon-export:';
++function getNativeAddonId(filePath) {
++    return (0, _nodecrypto().createHash)('sha256').update(filePath).digest('hex');
++}
++function createNativeAddonLoader(filenames) {
++    return `function __expo_require_native__(id){const filenames=${JSON.stringify(filenames)};return $$require_external($$require_external("node:path").resolve(__dirname,filenames[id]));}\n`;
++}
+diff --git a/build/src/start/server/metro/withMetroMultiPlatform.js b/build/src/start/server/metro/withMetroMultiPlatform.js
+--- a/build/src/start/server/metro/withMetroMultiPlatform.js
++++ b/build/src/start/server/metro/withMetroMultiPlatform.js
+@@ -86,6 +86,7 @@
+ const _externals = require("./externals");
+ const _metroErrors = require("./metroErrors");
+ const _metroVirtualModules = require("./metroVirtualModules");
++const _nativeNodeAddons = require("./nativeNodeAddons");
+ const _withMetroErrorReportingResolver = require("./withMetroErrorReportingResolver");
+ const _withMetroResolvers = require("./withMetroResolvers");
+ const _withMetroSupervisingTransformWorker = require("./withMetroSupervisingTransformWorker");
+@@ -232,6 +233,21 @@
+     nodejsSourceExtensions.splice(jsIndex + 1, 0, ...mjsExts);
+     return nodejsSourceExtensions;
+ }
++const HMR_CLIENT_PROD_SHIM_ID = '\0shim:HMRClientProdShim.js';
++const HMR_CLIENT_PROD_SHIM = `
++const HMRClientProdShim = {
++  setup() {},
++  enable() {
++    console.error(
++      'Fast Refresh is disabled in JavaScript bundles built in production mode. Did you forget to run Metro?'
++    );
++  },
++  disable() {},
++  registerBundle() {},
++  log() {},
++};
++export default HMRClientProdShim;
++`;
+ function withExtendedResolver(config, { autolinkingModuleResolverInput, isTsconfigPathsEnabled, isExporting, isReactServerComponentsEnabled, getMetroBundler }) {
+     if (isReactServerComponentsEnabled) {
+         _log.Log.warn(`React Server Components (beta) is enabled.`);
+@@ -595,7 +611,18 @@
+                         return emptySetupEnv;
+                     }
+                 }
+-                const hmrModule = doReplaceStrict(`${hostPackage}/Libraries/Utilities/HMRClient.js`, 'expo/src/async-require/hmr.ts');
++                const hmrClientPath = `${hostPackage}/Libraries/Utilities/HMRClient.js`;
++                if (!context.dev && normalizedPath.endsWith(hmrClientPath)) {
++                    const bundler = (0, _metroVirtualModules.getMetroBundlerWithVirtualModules)(getMetroBundler());
++                    if (!bundler.hasVirtualModule(HMR_CLIENT_PROD_SHIM_ID)) {
++                        bundler.setVirtualModule(HMR_CLIENT_PROD_SHIM_ID, HMR_CLIENT_PROD_SHIM);
++                    }
++                    return {
++                        ...result,
++                        filePath: HMR_CLIENT_PROD_SHIM_ID
++                    };
++                }
++                const hmrModule = doReplaceStrict(hmrClientPath, 'expo/src/async-require/hmr.ts');
+                 if (hmrModule) return hmrModule;
+                 if (useExpoUnstableLogBox) {
+                     // TODO(@kitten): This can never resolve with isolated dependencies
+@@ -688,7 +715,35 @@
+         }
+         return context;
+     });
+-    return (0, _withMetroErrorReportingResolver.withMetroErrorReportingResolver)((0, _withMetroSupervisingTransformWorker.withMetroSupervisingTransformWorker)(metroConfigWithCustomContext));
++    const resolveRequest = metroConfigWithCustomContext.resolver.resolveRequest;
++    return (0, _withMetroErrorReportingResolver.withMetroErrorReportingResolver)((0, _withMetroSupervisingTransformWorker.withMetroSupervisingTransformWorker)({
++        ...metroConfigWithCustomContext,
++        resolver: {
++            ...metroConfigWithCustomContext.resolver,
++            sourceExts: [
++                ...new Set([
++                    ...metroConfigWithCustomContext.resolver.sourceExts,
++                    'node'
++                ])
++            ],
++            resolveRequest (context, moduleName, platform) {
++                const result = resolveRequest(context, moduleName, platform);
++                if (context.customResolverOptions?.environment === 'node') {
++                    const filePath = result.type === 'sourceFile' ? result.filePath : result.type === 'assetFiles' ? result.filePaths[0] : null;
++                    if (filePath?.endsWith('.node')) {
++                        const isExporting = context.customResolverOptions.exporting;
++                        const virtualModuleId = isExporting ? `${_nativeNodeAddons.NATIVE_ADDON_EXPORT_PREFIX}${filePath}` : `\0node-addon:${filePath}`;
++                        (0, _metroVirtualModules.getMetroBundlerWithVirtualModules)(getMetroBundler()).setVirtualModule(virtualModuleId, isExporting ? `module.exports=__expo_require_native__(${JSON.stringify((0, _nativeNodeAddons.getNativeAddonId)(filePath))});` : `module.exports=$$require_external(${JSON.stringify(filePath)});`);
++                        return {
++                            type: 'sourceFile',
++                            filePath: virtualModuleId
++                        };
++                    }
++                }
++                return result;
++            }
++        }
++    }));
+ }
+ function doReplaceHelper(from, to, { throws = false, normalizedPath, doResolve }) {
+     if (!normalizedPath.endsWith(from)) {
+@@ -763,5 +818,3 @@
+         getMetroBundler
+     });
+ }
+-
+-//# sourceMappingURL=withMetroMultiPlatform.js.map

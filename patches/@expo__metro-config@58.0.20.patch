@@ -1,0 +1,32 @@
+diff --git a/build/transform-worker/collect-dependencies.js b/build/transform-worker/collect-dependencies.js
+--- a/build/transform-worker/collect-dependencies.js
++++ b/build/transform-worker/collect-dependencies.js
+@@ -570,15 +570,14 @@
+     if (isInPromiseChainWithRejectionHandler(path)) {
+         return true;
+     }
+-    // Valid statement stack for single-level try-block: expressionStatement -> blockStatement -> tryStatement
+-    let sCount = 0;
++    // Functions declared inside a try block may be called outside it
+     let p = path;
+-    while(p && sCount < 3){
+-        if (p.isStatement()) {
+-            if (p.node.type === 'BlockStatement') {
+-                return p.parentPath != null && p.parentPath.node.type === 'TryStatement' && p.key === 'block';
+-            }
+-            sCount += 1;
++    while(p){
++        if (p.isFunction()) {
++            return false;
++        }
++        if (p.isBlockStatement() && p.parentPath != null && p.parentPath.isTryStatement() && p.key === 'block') {
++            return true;
+         }
+         p = p.parentPath;
+     }
+@@ -821,5 +820,3 @@
+     }
+ }
+ const _default = collectDependencies;
+-
+-//# sourceMappingURL=collect-dependencies.js.map
