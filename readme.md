@@ -30,11 +30,9 @@ Install dependencies to apply the patches:
 pnpm install
 ```
 
-Requirements:
-
-- CommonJS package settings
-- Node.js server
-- Native binaries matching the server's operating system and architecture
+- Use `"type": "commonjs"` in `package.json`, or omit `type`. This workaround does not fix [Expo's separate `"type": "module"` export issue](https://github.com/expo/expo/issues/52690).
+- Deploy to a Node.js runtime. Edge runtimes cannot load `.node` files.
+- Install or compile the native addon for the deployment server's operating system and CPU architecture. A binary built for macOS cannot run on Linux.
 
 Code and reproduction: https://github.com/karlhorky/repro-expo-api-routes-node-rs-bcrypt-native-addons
 
