@@ -36,7 +36,7 @@ Requirements:
 - Node.js server
 - Native binaries matching the server's operating system and architecture
 
-- Code and reproduction: https://github.com/karlhorky/repro-expo-api-routes-node-rs-bcrypt-native-addons
+Code and reproduction: https://github.com/karlhorky/repro-expo-api-routes-node-rs-bcrypt-native-addons
 
 ## Protect API Routes from Cross-Site Request Forgery (CSRF)
 
