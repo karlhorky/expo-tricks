@@ -55,7 +55,6 @@ To reject cross-site write requests, check the `Origin` host in [server middlewa
 // Expo Router API Routes do not yet have built-in CSRF protection
 // - https://github.com/expo/expo/issues/53058
 
-// eslint-disable-next-line @typescript-eslint/naming-convention -- Expo Router requires this export name
 export const unstable_settings = {
   matcher: {
     // Skip screens and other requests with safe methods
@@ -64,6 +63,23 @@ export const unstable_settings = {
 };
 
 export default function middleware(request: Request) {
+  const contentType = request.headers
+    .get('content-type')
+    ?.split(';', 1)[0]
+    ?.trim()
+    .toLowerCase();
+
+  if (
+    contentType &&
+    ![
+      'application/x-www-form-urlencoded',
+      'multipart/form-data',
+      'text/plain',
+    ].includes(contentType)
+  ) {
+    return;
+  }
+
   const origin = request.headers.get('origin');
 
   // Allow non-browser clients without Origin
