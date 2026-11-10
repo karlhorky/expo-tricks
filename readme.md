@@ -83,5 +83,4 @@ export default function middleware(request: Request) {
 
 Adjust `patterns` for your API Route paths. Behind a reverse proxy, ensure it overwrites `x-forwarded-host` with the public host. The check compares hosts and ports, not protocols.
 
-- Code: [Next.js and Expo Router API origin checks](https://gist.github.com/karlhorky/61f751daf34799caee18f4f6d895ee29)
 - Reproduction: https://github.com/karlhorky/repro-expo-router-api-routes-no-csrf-protection
