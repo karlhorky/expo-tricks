@@ -30,13 +30,17 @@ Install dependencies to apply the patches:
 pnpm install
 ```
 
-The prototype uses CommonJS package settings and requires a Node.js server with native binaries matching its operating system and architecture.
+Requirements:
+
+- CommonJS package settings
+- Node.js server
+- Native binaries matching the server's operating system and architecture
 
 - Code and reproduction: https://github.com/karlhorky/repro-expo-api-routes-node-rs-bcrypt-native-addons
 
 ## Protect API Routes from Cross-Site Request Forgery (CSRF)
 
-**Update:** Starting in Expo &lt;unreleased version>, API Routes have built-in protection against cross-origin form submissions.
+**Update:** Starting in Expo &lt;unreleased version> (PR [`expo/expo#53115`](https://github.com/expo/expo/pull/53115)), API Routes have built-in protection against cross-origin form submissions.
 
 [Expo Router API Routes do not reject cross-site form submissions by default](https://github.com/expo/expo/issues/53058), allowing attacks such as login CSRF.
 
