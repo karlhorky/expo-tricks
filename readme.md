@@ -95,6 +95,4 @@ export default function middleware(request: Request) {
 }
 ```
 
-If you allow cross-origin writes, allow those origins in this check too.
-
 - Reproduction: https://github.com/karlhorky/repro-expo-router-api-routes-no-csrf-protection
