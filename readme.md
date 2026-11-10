@@ -6,7 +6,7 @@ A collection of useful Expo tricks
 
 [Expo Router API Routes cannot import Node.js native addons](https://github.com/expo/expo/issues/32350), eg. `@node-rs/bcrypt`.
 
-To load native addons and include their binaries in server exports, apply pnpm patches for `@expo/cli@58.1.18` and `@expo/metro-config@58.0.20`, based on the prototype in [Expo PR #53246](https://github.com/expo/expo/pull/53246):
+To load native addons and include their binaries in server exports, apply pnpm patches for `@expo/cli@58.1.18` and `@expo/metro-config@58.0.20`, based on the workaround in [Expo PR #53246](https://github.com/expo/expo/pull/53246):
 
 ```bash
 mkdir -p patches
